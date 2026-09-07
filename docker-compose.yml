@@ -20,7 +20,8 @@ services:
             db:
                 condition: service_healthy
         env_file:
-            - ./backend/.env
+            - path: ./backend/.env
+              required: false
         container_name: casino_app
         user: '${UID}:${GID}'
 
@@ -65,8 +66,8 @@ services:
         ports:
             - '8102:80'
         environment:
-            PGADMIN_DEFAULT_EMAIL: admin@casino.local
-            PGADMIN_DEFAULT_PASSWORD: admin
+            PGADMIN_DEFAULT_EMAIL: admin@example.com
+            PGADMIN_DEFAULT_PASSWORD: Admin1234%
         depends_on:
             - db
         container_name: casino_pgadmin
