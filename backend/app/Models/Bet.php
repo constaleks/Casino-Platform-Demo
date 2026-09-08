@@ -33,6 +33,6 @@ class Bet extends Model
  
     public function round(): BelongsTo
     {
-        return $this->belongsTo(GameRound::class);
+        return $this->belongsTo(GameRound::class, 'game_round_id');
     }
 }

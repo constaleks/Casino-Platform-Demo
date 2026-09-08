@@ -34,4 +34,9 @@ class GameRound extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function bets(): HasMany
+    {
+        return $this->hasMany(Bet::class);
+    }
 }
