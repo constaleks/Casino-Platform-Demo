@@ -38,4 +38,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Wallet::class);
     }
+
+    public function rounds(): HasMany
+    {
+        return $this->hasMany(GameRound::class);
+    }
+    
+    public function bets(): HasMany
+    {
+        return $this->hasMany(Bet::class);
+    }
 }
