@@ -12,6 +12,7 @@ interface AuthState {
     login: (payload: authApi.LoginPayload) => Promise<void>;
     logout: () => Promise<void>;
     fetchCurrentUser: () => Promise<void>;
+    clearError: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -27,6 +28,7 @@ export const useAuthStore = create<AuthState>((set) => ({
             set({ user, status: 'authenticated', isSubmitting: false });
         } catch (err) {
             set({ status: 'unauthenticated', error: extractErrorMessage(err), isSubmitting: false });
+            throw err;
         }
     },
 
@@ -53,6 +55,10 @@ export const useAuthStore = create<AuthState>((set) => ({
         } catch {
             set({ user: null, status: 'unauthenticated' });
         }
+    },
+
+    clearError: () => {
+        set({ error: null });
     },
 }));
 

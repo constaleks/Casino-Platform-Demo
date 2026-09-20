@@ -24,9 +24,16 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
+            'name' => ['required', 'string', 'max:255', 'regex:/^\p{L}+(?:[\'-]\p{L}+)*(?:\s+\p{L}+(?:[\'-]\p{L}+)*)+$/u'],
             'email' => 'required|email|lowercase|max:255|unique:users,email',
             'password' => ['required', 'confirmed', Password::defaults()],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.regex' => 'Please enter your full name (first and last name).',
         ];
     }
 }

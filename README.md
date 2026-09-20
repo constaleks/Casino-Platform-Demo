@@ -72,7 +72,7 @@ This project handles it with **pessimistic locking** (`SELECT ... FOR UPDATE`) r
 
 - [x]   1. **Docker & architecture setup** — containerize the stack, configure services, environment
 - [x]   2. **Database design & implementation** — schema design, migrations for core entities (users, wallets, transactions, games, rounds, bets)
-- [ ]   3. **Authentication** — Laravel Sanctum, SPA cookie-based auth, registration/login flow
+- [x]   3. **Authentication** — Laravel Sanctum, SPA cookie-based auth, registration/login flow
 - [ ]   4. **User dashboard** — profile, wallet balance, transaction history
 - [ ]   5. **Roulette game** — provably fair result generation, bet placement, round resolution
 - [ ]   6. **Real-time updates** — Laravel Reverb + Echo integration for live balance/result updates
