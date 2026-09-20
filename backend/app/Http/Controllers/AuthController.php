@@ -44,8 +44,7 @@ class AuthController extends Controller
         $request->session()->regenerate();
 
         return response()->json([
-            'user' => $user,
-            'wallet' => $wallet,
+            'user' => $user->load('wallets'),
         ], 201);
     }
 
@@ -63,7 +62,9 @@ class AuthController extends Controller
         $user = Auth::guard('web')->user();
         $user->forceFill(['last_login_at' => now()])->save();
  
-        return response()->json(['user' => $user]);
+        return response()->json([
+            'user' => $user->load('wallets'),
+        ]);
     }
  
     public function logout(Request $request)
