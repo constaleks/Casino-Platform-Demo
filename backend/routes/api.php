@@ -1,7 +1,10 @@
 <?php
 
-use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\GameController;
+use App\Http\Controllers\WalletController;
+use App\Http\Controllers\WalletTransactionController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
@@ -11,5 +14,16 @@ Route::prefix('auth')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
+    });
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/games', [GameController::class, 'index']);
+    Route::get('/wallet-transactions', [WalletTransactionController::class, 'index']);
+
+    Route::prefix('wallets')->group(function () {
+        Route::get('/', [WalletController::class, 'index']);
+        Route::post('/', [WalletController::class, 'store']);
+        Route::post('/{wallet}/deposit', [WalletController::class, 'deposit']);
     });
 });
