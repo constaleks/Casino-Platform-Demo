@@ -1,17 +1,16 @@
-import { Link } from 'react-router-dom';
 import { UserLayout } from '@/components/layout/UserLayout';
+import { PageHeader } from '@/components/user/PageHeader';
 import { TransactionHistory } from '@/features/user/wallet/components/TransactionHistory';
 
 export function TransactionsPage() {
     return (
         <UserLayout>
             <div className="flex flex-col gap-6">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">Transaction History</h1>
-                    <Link to="/dashboard" className="text-sm font-medium text-primary hover:underline">
-                        Back to dashboard
-                    </Link>
-                </div>
+                <PageHeader
+                    eyebrow="Your money"
+                    title="Transaction History"
+                    description="Every deposit, bet, win, refund and bonus across all of your wallets."
+                />
 
                 <TransactionHistory />
             </div>
