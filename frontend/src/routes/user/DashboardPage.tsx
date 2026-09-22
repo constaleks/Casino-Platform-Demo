@@ -1,29 +1,28 @@
-import { useAuthStore } from '@/features/auth/authStore';
-import { Button } from '@/components/ui/button';
+import { UserLayout } from '@/components/layout/UserLayout';
+import { useAuthStore } from '@/features/user/auth/authStore';
+
+import { GamesList } from '@/features/user/games/components/GamesList';
+import { WalletsPanel } from '@/features/user/wallet/components/WalletsPanel';
 
 export function DashboardPage() {
     const user = useAuthStore((s) => s.user);
-    const logout = useAuthStore((s) => s.logout);
-
-    const wallet = user?.wallets?.[0];
 
     return (
-        <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6">
-            <div className="text-center">
-                <h1 className="text-2xl font-bold">Welcome, {user?.name}</h1>
-                <p className="text-muted-foreground">{user?.email}</p>
-            </div>
+        <UserLayout>
+            <div className="my-auto w-full grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr_220px]">
+                <aside className="order-2 lg:order-1">
+                    <WalletsPanel />
+                </aside>
 
-            <div className="rounded-lg border p-6 text-center">
-                <p className="text-sm text-muted-foreground">Balance</p>
-                <p className="text-3xl font-bold">
-                    {wallet ? `${parseFloat(wallet.balance).toFixed(2)} ${wallet.currency}` : 'Loading...'}
-                </p>
-            </div>
+                <main className="order-1 flex flex-col lg:order-2">
+                    <h1 className="text-2xl font-bold text-center">Welcome, {user?.name}</h1>
+                    <h4 className="text-center">{user?.email}</h4>
+                </main>
 
-            <Button variant="outline" onClick={() => logout()}>
-                Log out
-            </Button>
-        </div>
+                <aside className="order-3 text-center lg:text-right">
+                    <GamesList />
+                </aside>
+            </div>
+        </UserLayout>
     );
 }

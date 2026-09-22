@@ -1,6 +1,6 @@
 import { useEffect, useState, type ChangeEvent, type SubmitEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuthStore } from '@/features/auth/authStore';
+import { useAuthStore } from '@/features/user/auth/authStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
