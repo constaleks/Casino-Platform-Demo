@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\WalletController;
 use App\Http\Controllers\WalletTransactionController;
+use App\Http\Controllers\RouletteController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
@@ -26,4 +27,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [WalletController::class, 'store']);
         Route::post('/{wallet}/deposit', [WalletController::class, 'deposit']);
     });
+
+    Route::post('/games/{game:slug}/spin', [RouletteController::class, 'spin'])->middleware('throttle:30,1');
 });
