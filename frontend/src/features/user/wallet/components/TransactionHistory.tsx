@@ -64,15 +64,13 @@ export function TransactionHistory() {
             <div
                 className={cn(
                     'overflow-x-auto rounded-2xl border border-white/8 bg-felt-800/50 transition-opacity',
-                    isPending && 'opacity-50'
+                    isPending && 'opacity-50',
                 )}>
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="border-b border-white/8">
                             {['Date', 'Type', 'Currency'].map((heading) => (
-                                <th
-                                    key={heading}
-                                    className="p-3 text-left text-[10px] font-bold tracking-[0.18em] text-white/35 uppercase">
+                                <th key={heading} className="p-3 text-left text-[10px] font-bold tracking-[0.18em] text-white/35 uppercase">
                                     {heading}
                                 </th>
                             ))}
@@ -91,9 +89,7 @@ export function TransactionHistory() {
                             const isCredit = CREDIT_TYPES.includes(tx.type);
 
                             return (
-                                <tr
-                                    key={tx.id}
-                                    className="border-b border-white/5 transition-colors last:border-0 hover:bg-white/5">
+                                <tr key={tx.id} className="border-b border-white/5 transition-colors last:border-0 hover:bg-white/5">
                                     <td className="p-3 whitespace-nowrap text-white/50">
                                         {new Date(tx.created_at).toLocaleString(undefined, {
                                             dateStyle: 'medium',
@@ -104,18 +100,14 @@ export function TransactionHistory() {
                                         <span
                                             className={cn(
                                                 'inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-bold tracking-[0.12em] uppercase',
-                                                TYPE_BADGE[tx.type]
+                                                TYPE_BADGE[tx.type],
                                             )}>
                                             {tx.type}
                                         </span>
                                     </td>
                                     <td className="p-3 font-semibold text-white/70">{tx.wallet?.currency ?? '—'}</td>
-                                    <td
-                                        className={cn(
-                                            'p-3 text-right font-bold tabular-nums',
-                                            isCredit ? 'text-win' : 'text-chip-red'
-                                        )}>
-                                        {isCredit ? '+' : '−'}
+                                    <td className={cn('p-3 text-right font-bold tabular-nums', isCredit ? 'text-win' : 'text-chip-red')}>
+                                        {isCredit ? '+' : ''}
                                         {formatAmount(tx.amount)}
                                     </td>
                                     <td className="p-3 text-right font-semibold text-white/60 tabular-nums">

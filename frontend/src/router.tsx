@@ -7,6 +7,7 @@ import { DashboardPage } from '@/routes/user/DashboardPage';
 import { TransactionsPage } from '@/routes/user/TransactionsPage';
 import { NewWalletPage } from '@/routes/user/NewWalletPage';
 import { DepositPage } from '@/routes/user/DepositPage';
+import { RoulettePage } from './routes/user/RoulettePage';
 
 export const router = createBrowserRouter([
     { path: '/', element: <Navigate to="/dashboard" replace /> },
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
             { path: '/transactions', element: <TransactionsPage /> },
             { path: '/wallets/new', element: <NewWalletPage /> },
             { path: '/wallets/:walletId/deposit', element: <DepositPage /> },
+            { path: '/games/european-roulette', element: <RoulettePage /> },
         ],
     },
 ]);
