@@ -12,6 +12,7 @@ use Illuminate\Database\QueryException;
 use App\Models\WalletTransaction;
 use App\Enums\WalletTransactionType;
 use Illuminate\Support\Str;
+use App\Events\WalletBalanceUpdated;
 
 class WalletController extends Controller
 {
@@ -71,8 +72,13 @@ class WalletController extends Controller
     {
         abort_if($wallet->user_id !== $request->user()->id, 403);
 
+        /*
+         * decimal:0,2 matters beyond "max two decimals": 'numeric' alone accepts strings
+         * like "1e3", which bcadd() rejects with a ValueError (500), and "0.019", which
+         * bcadd() truncates to 0.01 while the ledger column rounds it to 0.02.
+         */
         $validated = $request->validate([
-            'amount' => ['required', 'numeric', 'min:0.01', 'max:100000'],
+            'amount' => ['required', 'numeric', 'decimal:0,2', 'min:0.01', 'max:100000'],
         ]);
 
         $updatedWallet = DB::transaction(function () use ($wallet, $validated) {
@@ -108,6 +114,12 @@ class WalletController extends Controller
 
             return $lockedWallet;
         });
+
+        try {
+            WalletBalanceUpdated::dispatch($updatedWallet);
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return response()->json(['wallet' => $updatedWallet]);
     }

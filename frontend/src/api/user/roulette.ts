@@ -7,11 +7,9 @@ export interface SpinBetInput {
     amount: number;
 }
 
-export async function spinRoulette(gameSlug: string, bets: SpinBetInput[], clientSeed?: string): Promise<SpinResponse> {
-    const { data } = await apiClient.post<SpinResponse>(`/api/games/${gameSlug}/spin`, {
-        bets,
-        client_seed: clientSeed,
-    });
+/* The result comes from the player's active seed pair - see api/user/fairness.ts */
+export async function spinRoulette(gameSlug: string, bets: SpinBetInput[]): Promise<SpinResponse> {
+    const { data } = await apiClient.post<SpinResponse>(`/api/games/${gameSlug}/spin`, { bets });
 
     return data;
 }

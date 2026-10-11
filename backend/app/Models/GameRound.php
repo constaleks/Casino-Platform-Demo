@@ -9,7 +9,7 @@ use App\Enums\GameRoundStatus;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['game_id', 'user_id', 'client_seed'])]
+#[Fillable(['game_id', 'user_id'])]
 #[Hidden(['server_seed'])]
 class GameRound extends Model
 {
@@ -33,6 +33,11 @@ class GameRound extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function seedPair(): BelongsTo
+    {
+        return $this->belongsTo(SeedPair::class);
     }
 
     public function bets(): HasMany

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { isAxiosError } from 'axios';
 import * as authApi from '@/api/user/auth';
+import { disconnectEcho } from '@/lib/echo';
 import type { User } from '@/types/model';
 
 interface AuthState {
@@ -45,6 +46,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     logout: async () => {
         await authApi.logout();
+        disconnectEcho();
         set({ user: null, status: 'unauthenticated' });
     },
 

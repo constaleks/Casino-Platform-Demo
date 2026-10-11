@@ -43,9 +43,9 @@ class RouletteRoundResolved implements ShouldBroadcastNow
     }
 
     /*
-     * Payload is built by hand rather than via toArray(): the model hides
-     * server_seed by default, but a resolved round has revealed it, and an
-     * explicit payload also avoids leaking model internals over the socket.
+     * Payload is built by hand rather than via toArray() so model internals never
+     * leak over the socket. server_seed is only sent once revealed: while the seed
+     * pair is active it also decides the player's next rounds.
      */
     public function broadcastWith(): array
     {
@@ -54,7 +54,7 @@ class RouletteRoundResolved implements ShouldBroadcastNow
                 'id' => $this->round->id,
                 'result' => $this->round->result,
                 'server_seed_hash' => $this->round->server_seed_hash,
-                'server_seed' => $this->round->server_seed,
+                'server_seed' => $this->round->server_seed_revealed ? $this->round->server_seed : null,
                 'client_seed' => $this->round->client_seed,
                 'nonce' => $this->round->nonce,
                 'resolved_at' => $this->round->resolved_at?->toISOString(),

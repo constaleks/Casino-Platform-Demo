@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 interface SpinResultProps {
     round: GameRound;
     bets: Bet[];
+    className?: string;
 }
 
 const COLOR_CLASSES: Record<string, string> = {
@@ -12,14 +13,14 @@ const COLOR_CLASSES: Record<string, string> = {
     green: 'bg-green-700 text-white',
 };
 
-export function SpinResult({ round, bets }: SpinResultProps) {
+export function SpinResult({ round, bets, className }: SpinResultProps) {
     if (!round.result) return null;
 
     const totalPayout = bets.reduce((sum, bet) => sum + parseFloat(bet.payout_amount), 0);
     const netResult = totalPayout - bets.reduce((sum, bet) => sum + parseFloat(bet.amount), 0);
 
     return (
-        <div className="flex flex-col gap-3 rounded-lg border p-4">
+        <div className={cn('flex flex-col gap-3 overflow-y-auto rounded-lg border p-4', className)}>
             <div className="flex items-center gap-3">
                 <div
                     className={cn(
@@ -54,7 +55,11 @@ export function SpinResult({ round, bets }: SpinResultProps) {
             <details className="text-xs text-muted-foreground">
                 <summary className="cursor-pointer">Verify fairness</summary>
                 <p className="mt-1 break-all">Server seed hash: {round.server_seed_hash}</p>
-                {round.server_seed && <p className="mt-1 break-all">Server seed: {round.server_seed}</p>}
+                {round.server_seed ? (
+                    <p className="mt-1 break-all">Server seed: {round.server_seed}</p>
+                ) : (
+                    <p className="mt-1">Server seed: hidden until you change your seed (Provably fair panel).</p>
+                )}
                 <p className="mt-1 break-all">Client seed: {round.client_seed}</p>
                 <p className="mt-1">Nonce: {round.nonce}</p>
             </details>

@@ -47,7 +47,7 @@ The React SPA communicates with the Laravel API over HTTP and subscribes to Reve
 ## Core Principles
 
 - **Money:** the wallet balance is never mutated directly. Every change goes through a transaction ledger recording `balance_before`/`balance_after`. Debits/credits are atomic operations using row-level locking.
-- **Fairness:** game results are generated using a provably fair scheme (server seed + client seed + nonce). The seed hash is published before the round and the seed itself is revealed afterward, so the result can be independently verified.
+- **Fairness:** game results are generated using a provably fair commit-reveal scheme (server seed + client seed + nonce). Each player has an active seed pair whose server seed hash is shown before they play; every round increments the nonce. Changing the client seed rotates the pair and reveals the old server seed, so every round played with it can be independently verified (the roulette page does this in the browser).
 - **Extensibility:** the core structure is designed to support adding new games (blackjack, slots, whatever else...) without changing the base schema.
 
 ### Why PostgreSQL
@@ -74,8 +74,8 @@ This project handles it with **pessimistic locking** (`SELECT ... FOR UPDATE`) r
 - [x]   2. **Database design & implementation** — schema design, migrations for core entities (users, wallets, transactions, games, rounds, bets)
 - [x]   3. **Authentication** — Laravel Sanctum, SPA cookie-based auth, registration/login flow
 - [x]   4. **User dashboard** — profile, wallet balance, transaction history
-- [ ]   5. **Roulette game** — provably fair result generation, bet placement, round resolution
-- [ ]   6. **Real-time updates** — Laravel Reverb + Echo integration for live balance/result updates
+- [x]   5. **Roulette game** — provably fair result generation, bet placement, round resolution
+- [x]   6. **Real-time updates** — Laravel Reverb + Echo integration for live balance/result updates
 - [ ]   7. **Polish & extensibility pass** — refactor for adding future games without core schema changes
 
 ## Contributing

@@ -55,7 +55,8 @@ export interface GameRound {
     id: number;
     game_id: number;
     status: 'pending' | 'accepting_bets' | 'spinning' | 'completed' | 'cancelled';
-    server_seed?: string;
+    /* Absent / null until the round's seed pair is rotated and the seed revealed */
+    server_seed?: string | null;
     server_seed_hash: string;
     client_seed: string | null;
     nonce: number;
@@ -75,8 +76,36 @@ export interface Bet {
     status: 'placed' | 'won' | 'lost' | 'cancelled';
 }
 
+/*
+ * Payload of the backend's RouletteRoundResolved broadcast - a hand-built
+ * subset of GameRound/Bet (see broadcastWith()), not the full models
+ */
+export interface RoundResolvedEvent {
+    round: Pick<GameRound, 'id' | 'result' | 'server_seed_hash' | 'server_seed' | 'client_seed' | 'nonce' | 'resolved_at'>;
+    bets: Pick<Bet, 'id' | 'bet_type' | 'bet_value' | 'amount' | 'status' | 'payout_amount'>[];
+}
+
 export interface SpinResponse {
     round: GameRound;
     bets: Bet[];
     wallet: Wallet;
+    fairness: FairnessState;
+}
+
+/* The active seed pair as the player may see it - the server seed itself stays secret */
+export interface FairnessState {
+    server_seed_hash: string;
+    client_seed: string;
+    /* Nonce the next round will use */
+    nonce: number;
+}
+
+/* A rotated-out pair. Its rounds used nonces 0 .. nonce - 1 */
+export interface RevealedSeedPair extends FairnessState {
+    server_seed: string;
+}
+
+export interface RotateSeedResponse {
+    previous: RevealedSeedPair | null;
+    active: FairnessState;
 }

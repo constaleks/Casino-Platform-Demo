@@ -15,9 +15,12 @@ use App\Models\GameRound;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use App\Services\ProvablyFair;
+use App\Services\SeedPairManager;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use App\Events\WalletBalanceUpdated;
+use App\Events\RouletteRoundResolved;
 
 class RouletteController extends Controller
 {
@@ -60,7 +63,7 @@ class RouletteController extends Controller
             ]);
         }
 
-        $result = DB::transaction(function () use ($user, $game, $bets, $totalStake, $wallet, $request) {
+        $result = DB::transaction(function () use ($user, $game, $bets, $totalStake, $wallet) {
             /*
              * Pessimistic lock, same pattern as WalletController::deposit
              */ 
@@ -73,26 +76,27 @@ class RouletteController extends Controller
             }
 
             /*
-             * Provably fair logic here: fresh server seed per round, nonce fixed at 0
-             * (nonce exists in the schema for a future optimization - it will allow to reuse 
-             * one server seed across several rounds and just to increment a nonce but for now
-             * a fresh seed per round is simpler and equally valid)
+             * Provably fair, commit-reveal (see SeedPairManager): the result comes from the
+             * player's active seed pair, whose hash they could see before this request.
+             * The pair row is locked so concurrent spins can never consume the same nonce.
              */
-            $serverSeed = ProvablyFair::generateServerSeed();
-            $clientSeed = $request->input('client_seed') ?: Str::random(16);
-            $nonce = 0;
-            $winningNumber = ProvablyFair::resolveNumber($serverSeed, $clientSeed, $nonce, 37);
+            $seedPair = SeedPairManager::activeFor($user, lock: true);
+            $nonce = $seedPair->nonce;
+            $winningNumber = ProvablyFair::resolveNumber($seedPair->server_seed, $seedPair->client_seed, $nonce, 37);
+            $seedPair->forceFill(['nonce' => $nonce + 1])->save();
 
             $round = new GameRound();
             $round->forceFill([
                 'game_id' => $game->id,
                 'user_id' => $user->id,
+                'seed_pair_id' => $seedPair->id,
                 'status' => GameRoundStatus::Completed,
-                'server_seed' => $serverSeed,
-                'server_seed_hash' => ProvablyFair::hashServerSeed($serverSeed),
-                'client_seed' => $clientSeed,
+                'server_seed' => $seedPair->server_seed,
+                'server_seed_hash' => $seedPair->server_seed_hash,
+                'client_seed' => $seedPair->client_seed,
                 'nonce' => $nonce,
-                'server_seed_revealed' => true,
+                /* Revealed only when the player rotates the pair */
+                'server_seed_revealed' => false,
                 'result' => RouletteEngine::describeResult($winningNumber),
                 'bets_closed_at' => now(),
                 'resolved_at' => now(),
@@ -173,13 +177,23 @@ class RouletteController extends Controller
                 'round' => $round,
                 'bets' => $createdBets,
                 'wallet' => $lockedWallet,
+                'seed_pair' => $seedPair,
             ];
         });
 
+        try {
+            WalletBalanceUpdated::dispatch($result['wallet']);
+            RouletteRoundResolved::dispatch($result['round'], $result['bets']);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
         return response()->json([
-            'round' => $result['round']->fresh()->makeVisible('server_seed'),
+            /* server_seed stays hidden: it's still in use for the pair's next rounds */
+            'round' => $result['round']->fresh(),
             'bets' => $result['bets'],
             'wallet' => $result['wallet'],
+            'fairness' => SeedPairManager::publicState($result['seed_pair']),
         ]);
     }
 }

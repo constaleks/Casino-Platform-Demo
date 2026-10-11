@@ -26,7 +26,6 @@ class SpinRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'client_seed' => ['nullable', 'string', 'max:64'],
             'wallet_id' => ['nullable', 'integer', 'exists:wallets,id'],
             'bets' => ['required', 'array', 'min:1', 'max:20'],
             'bets.*.bet_type' => ['required', 'string', Rule::in(RouletteEngine::supportedBetTypes())],
