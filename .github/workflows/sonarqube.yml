@@ -1,0 +1,63 @@
+name: SonarQube Cloud
+
+permissions:
+    contents: read
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        types: [opened, synchronize, reopened]
+
+jobs:
+    analyze:
+        runs-on: ubuntu-latest
+
+        services:
+            postgres:
+                image: postgres:17-alpine
+                env:
+                    POSTGRES_DB: casino_testing
+                    POSTGRES_USER: casino_user
+                    POSTGRES_PASSWORD: secret
+                ports: ['5432:5432']
+                options: >-
+                    --health-cmd "pg_isready -U casino_user -d casino_testing"
+                    --health-interval 5s --health-timeout 5s --health-retries 10
+
+        defaults:
+            run:
+                working-directory: backend
+
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0 # full history: needed for blame + "new code" detection
+
+            - uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.4'
+                  extensions: pdo_pgsql, pgsql, bcmath, pcntl, zip
+                  coverage: pcov # coverage driver (faster than Xdebug)
+
+            - run: composer install --no-interaction --prefer-dist --no-progress
+
+            - name: Prepare Laravel env
+              run: |
+                  cp .env.example .env
+                  php artisan key:generate
+
+            - name: Run tests with coverage
+              env:
+                  DB_HOST: 127.0.0.1
+                  DB_PORT: 5432
+                  DB_USERNAME: casino_user
+                  DB_PASSWORD: secret
+              run: php vendor/bin/phpunit --coverage-clover coverage.xml --log-junit junit.xml
+
+            - name: SonarQube Cloud scan
+              uses: SonarSource/sonarqube-scan-action@v5 # check the Marketplace for the latest major
+              with:
+                  projectBaseDir: .
+              env:
+                  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
