@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -39,6 +40,20 @@ class AppServiceProvider extends ServiceProvider
          */
         RateLimiter::for('register', function (Request $request) {
             return Limit::perHour(10)->by('register:'.$request->ip());
+        });
+
+        /*
+         * Per IP: one client trying many accounts. Per email: one account attacked from
+         * many IPs. The email limit stays looser because anyone can trip it on purpose
+         * to lock a player out for a few minutes.
+         */
+        RateLimiter::for('login', function (Request $request) {
+            $email = $request->input('email');
+
+            return [
+                Limit::perMinute(5)->by('login:ip:'.$request->ip()),
+                Limit::perMinutes(15, 10)->by('login:email:'.(is_string($email) ? Str::lower($email) : '')),
+            ];
         });
     }
 }

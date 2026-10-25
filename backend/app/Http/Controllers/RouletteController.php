@@ -29,7 +29,7 @@ class RouletteController extends Controller
         abort_unless($game->is_active && $game->type === GameType::Roulette, 404);
 
         $user = $request->user();
-        $bets = $request->input('bets');
+        $bets = $request->bets();
 
         /*
          * Per-bet limit check, and precise total-stake sum - bcadd throughout,
@@ -119,7 +119,7 @@ class RouletteController extends Controller
                     'wallet_id' => $lockedWallet->id,
                     'game_round_id' => $round->id,
                     'bet_type' => $betInput['bet_type'],
-                    'bet_value' => $betInput['bet_value'] ?? [],
+                    'bet_value' => $betInput['bet_value'],
                     'amount' => $betInput['amount'],
                     'status' => BetStatus::Placed,
                 ])->save();
@@ -137,7 +137,7 @@ class RouletteController extends Controller
 
                 $won = RouletteEngine::isWinningBet(
                     $betInput['bet_type'],
-                    $betInput['bet_value'] ?? [],
+                    $betInput['bet_value'],
                     $winningNumber
                 );
                 $multiplier = RouletteEngine::multiplierFor($betInput['bet_type']);

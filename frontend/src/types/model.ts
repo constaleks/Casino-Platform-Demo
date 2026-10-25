@@ -95,13 +95,13 @@ export interface SpinResponse {
 /* The active seed pair as the player may see it - the server seed itself stays secret */
 export interface FairnessState {
     server_seed_hash: string;
+    next_server_seed_hash: string;
     client_seed: string;
-    /* Nonce the next round will use */
     nonce: number;
 }
 
 /* A rotated-out pair. Its rounds used nonces 0 .. nonce - 1 */
-export interface RevealedSeedPair extends FairnessState {
+export interface RevealedSeedPair extends Omit<FairnessState, 'next_server_seed_hash'> {
     server_seed: string;
 }
 

@@ -90,6 +90,32 @@ class RouletteEngine
         return array_keys(self::MULTIPLIERS);
     }
 
+    /*
+     * The bet_value a bet type expects, rebuilt from only the keys that type reads,
+     * or null if the input doesn't fit. Anything else the client sent is dropped,
+     * so it never reaches the bets table or the broadcast payload.
+     */
+    public static function normalizeBetValue(string $betType, mixed $betValue): ?array
+    {
+        $value = is_array($betValue) ? $betValue : [];
+        $numbers = $value['numbers'] ?? null;
+
+        return match ($betType) {
+            'straight' => is_array($numbers)
+                && array_is_list($numbers)
+                && count($numbers) === 1
+                && is_int($numbers[0])
+                && $numbers[0] >= 0
+                && $numbers[0] <= 36
+                    ? ['numbers' => [$numbers[0]]]
+                    : null,
+            'dozen' => in_array($value['dozen'] ?? null, [1, 2, 3], true) ? ['dozen' => $value['dozen']] : null,
+            'column' => in_array($value['column'] ?? null, [1, 2, 3], true) ? ['column' => $value['column']] : null,
+            'red', 'black', 'even', 'odd', 'low', 'high' => [],
+            default => null,
+        };
+    }
+
     public static function multiplierFor(string $betType): float
     {
         return self::MULTIPLIERS[$betType];

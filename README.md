@@ -76,7 +76,7 @@ This project handles it with **pessimistic locking** (`SELECT ... FOR UPDATE`) r
 - [x]   4. **User dashboard** — profile, wallet balance, transaction history
 - [x]   5. **Roulette game** — provably fair result generation, bet placement, round resolution
 - [x]   6. **Real-time updates** — Laravel Reverb + Echo integration for live balance/result updates
-- [ ]   7. **Polish & extensibility pass** — refactor for adding future games without core schema changes
+- [x]   7. **Polish & extensibility pass** — refactor for adding future games without core schema changes
 
 ## Contributing
 

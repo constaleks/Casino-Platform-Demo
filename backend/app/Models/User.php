@@ -19,6 +19,14 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
 
+    /*
+     * Mirrors the column's database default, so a freshly created user isn't
+     * status = null in memory (EnsureUserIsActive reads it on that same instance)
+     */
+    protected $attributes = [
+        'status' => 'active',
+    ];
+
     /**
      * Get the attributes that should be cast.
      *

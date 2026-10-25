@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\GameType;
 use App\Enums\WalletCurrency;
+use App\Models\Bet;
 use App\Models\Game;
 use App\Models\User;
 use App\Models\Wallet;
@@ -156,6 +157,42 @@ class RouletteSpinTest extends TestCase
 
         $this->assertNothingWasWritten();
         $this->assertSame('1000.00', $intruderWallet->refresh()->balance);
+    }
+
+    public function test_a_wallet_that_does_not_exist_looks_the_same_as_someone_elses(): void
+    {
+        $this->spin([$this->bet('red', '10.00')], ['wallet_id' => 999999])
+            ->assertNotFound();
+
+        $this->assertNothingWasWritten();
+    }
+
+    public function test_it_stores_only_the_bet_value_keys_a_bet_type_uses(): void
+    {
+        $junk = ['padding' => str_repeat('x', 1000), 'nested' => ['a' => ['b' => 1]]];
+
+        $response = $this->spin([
+            $this->bet('red', '1.00', $junk),
+            $this->bet('dozen', '1.00', ['dozen' => 2] + $junk),
+            $this->bet('straight', '1.00', ['numbers' => [17]] + $junk),
+        ])->assertOk();
+
+        $response->assertJsonPath('bets.0.bet_value', []);
+        $response->assertJsonPath('bets.1.bet_value', ['dozen' => 2]);
+        $response->assertJsonPath('bets.2.bet_value', ['numbers' => [17]]);
+        $this->assertSame(
+            [[], ['dozen' => 2], ['numbers' => [17]]],
+            Bet::orderBy('id')->get()->pluck('bet_value')->all()
+        );
+    }
+
+    public function test_it_rejects_a_straight_bet_whose_numbers_are_not_a_list(): void
+    {
+        $this->spin([$this->bet('straight', '10.00', ['numbers' => ['first' => 17]])])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('bets.0.bet_value');
+
+        $this->assertNothingWasWritten();
     }
 
     public function test_it_rejects_an_unknown_bet_type(): void

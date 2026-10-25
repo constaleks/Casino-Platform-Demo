@@ -57,6 +57,7 @@ class FairnessTest extends TestCase
         $pair = SeedPair::where('user_id', $this->user->id)->sole();
         $response->assertExactJson(['active' => [
             'server_seed_hash' => hash('sha256', $pair->server_seed),
+            'next_server_seed_hash' => hash('sha256', $pair->next_server_seed),
             'client_seed' => $pair->client_seed,
             'nonce' => 0,
         ]]);
@@ -110,6 +111,22 @@ class FairnessTest extends TestCase
         $response->assertJsonPath('active.client_seed', 'my-new-seed');
         $response->assertJsonPath('active.nonce', 0);
         $this->assertNotSame($committedHash, $response->json('active.server_seed_hash'));
+    }
+
+    public function test_rotating_promotes_the_seed_committed_before_the_client_seed_was_chosen(): void
+    {
+        $committedNextHash = $this->getJson('/api/fairness')->json('active.next_server_seed_hash');
+        $committedNextSeed = SeedPair::where('user_id', $this->user->id)->sole()->next_server_seed;
+
+        $response = $this->postJson('/api/fairness/rotate', ['client_seed' => 'chosen-after-commit'])->assertOk();
+
+        $response->assertJsonPath('active.server_seed_hash', $committedNextHash);
+        $this->assertNotSame($committedNextHash, $response->json('active.next_server_seed_hash'));
+
+        /* The promoted seed is the new active secret: not in the response, not left on the old pair */
+        $this->assertStringNotContainsString($committedNextSeed, $response->getContent());
+        $response->assertJsonMissingPath('previous.next_server_seed');
+        $this->assertNull(SeedPair::whereNotNull('revealed_at')->sole()->next_server_seed);
     }
 
     public function test_rotating_without_a_client_seed_generates_one(): void

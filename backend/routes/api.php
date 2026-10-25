@@ -15,15 +15,16 @@ Route::prefix('auth')->group(function () {
      */
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register');
 
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+    /* Limited per IP and per email (limiter: AppServiceProvider) */
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
     });
 });
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/games', [GameController::class, 'index']);
     Route::get('/wallet-transactions', [WalletTransactionController::class, 'index']);
 

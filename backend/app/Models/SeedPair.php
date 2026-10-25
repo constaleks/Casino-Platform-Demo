@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * No #[Fillable]: every column here is fairness-critical and only ever written
  * by SeedPairManager via forceFill/forceCreate
  */
-#[Hidden(['server_seed'])]
+#[Hidden(['server_seed', 'next_server_seed'])]
 class SeedPair extends Model
 {
     protected function casts(): array

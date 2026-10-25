@@ -23,6 +23,8 @@ export interface VerifiableRound {
 interface Verification {
     pair: RevealedSeedPair;
     hashMatches: boolean;
+    /* The new pair uses the server seed whose hash was shown before the client seed was picked */
+    commitmentHonored: boolean;
     checked: number;
     /* Round ids whose recomputed number differs from what the server reported */
     mismatches: number[];
@@ -42,9 +44,15 @@ function shortHash(hash: string): string {
 /*
  * Verification runs in the browser (WebCrypto), independent of the server: the
  * revealed seed must hash to the commitment shown before play, and must reproduce
- * every round of this session that used it.
+ * every round of this session that used it. The new active pair must also carry
+ * the next-seed hash that was shown before the new client seed was sent.
  */
-async function verifyReveal(pair: RevealedSeedPair, rounds: VerifiableRound[]): Promise<Verification> {
+async function verifyReveal(
+    pair: RevealedSeedPair,
+    rounds: VerifiableRound[],
+    committedNextHash: string | undefined,
+    active: FairnessState,
+): Promise<Verification> {
     const hashMatches = (await sha256Hex(pair.server_seed)) === pair.server_seed_hash;
     const ownRounds = rounds.filter((r) => r.serverSeedHash === pair.server_seed_hash);
     const recomputed = await Promise.all(
@@ -54,6 +62,7 @@ async function verifyReveal(pair: RevealedSeedPair, rounds: VerifiableRound[]): 
     return {
         pair,
         hashMatches,
+        commitmentHonored: committedNextHash === active.server_seed_hash,
         checked: ownRounds.length,
         mismatches: ownRounds.filter((r, i) => recomputed[i] !== r.number).map((r) => r.roundId),
     };
@@ -71,10 +80,17 @@ export function FairnessPanel({ fairness, rounds, disabled, onRotated }: Fairnes
         setError(null);
         setIsRotating(true);
 
+        /* Captured before the request: the commitment as the player saw it */
+        const committedNextHash = fairness?.next_server_seed_hash;
+
         try {
             const response = await rotateSeedPair(newSeed.trim() || undefined);
             onRotated(response.active);
-            setVerification(response.previous ? await verifyReveal(response.previous, rounds) : null);
+            setVerification(
+                response.previous
+                    ? await verifyReveal(response.previous, rounds, committedNextHash, response.active)
+                    : null,
+            );
             setIsEditing(false);
             setNewSeed('');
         } catch (err) {
@@ -88,7 +104,11 @@ export function FairnessPanel({ fairness, rounds, disabled, onRotated }: Fairnes
         }
     }
 
-    const isVerified = verification && verification.hashMatches && verification.mismatches.length === 0;
+    const isVerified =
+        verification &&
+        verification.hashMatches &&
+        verification.commitmentHonored &&
+        verification.mismatches.length === 0;
 
     return (
         <div className="flex flex-col gap-2 rounded-xl border border-white/5 bg-felt-900/50 p-3 text-xs">
@@ -111,6 +131,10 @@ export function FairnessPanel({ fairness, rounds, disabled, onRotated }: Fairnes
                     <dd className="truncate font-mono text-white/80" title={fairness.server_seed_hash}>
                         {shortHash(fairness.server_seed_hash)}
                     </dd>
+                    <dt className="text-white/40">Next seed hash</dt>
+                    <dd className="truncate font-mono text-white/80" title={fairness.next_server_seed_hash}>
+                        {shortHash(fairness.next_server_seed_hash)}
+                    </dd>
                     <dt className="text-white/40">Client seed</dt>
                     <dd className="truncate font-mono text-white/80" title={fairness.client_seed}>
                         {fairness.client_seed}
@@ -126,7 +150,7 @@ export function FairnessPanel({ fairness, rounds, disabled, onRotated }: Fairnes
                 <form onSubmit={handleRotate} className="flex flex-col gap-2 border-t border-white/5 pt-2">
                     <label htmlFor="new-client-seed" className="text-white/60">
                         New client seed. This reveals the current server seed so you can verify your rounds, and
-                        starts a new pair.
+                        starts a new pair with the next seed shown above.
                     </label>
                     <div className="flex gap-2">
                         <Input
@@ -169,7 +193,9 @@ export function FairnessPanel({ fairness, rounds, disabled, onRotated }: Fairnes
                         {isVerified ? <Check className="size-3.5" /> : <TriangleAlert className="size-3.5" />}
                         {!verification.hashMatches
                             ? 'Seed does NOT match the hash you were shown.'
-                            : verification.mismatches.length > 0
+                            : !verification.commitmentHonored
+                              ? 'The new seed pair does NOT use the next seed hash you were shown.'
+                              : verification.mismatches.length > 0
                               ? `${verification.mismatches.length} of ${verification.checked} rounds do NOT reproduce.`
                               : `Hash matches · ${verification.checked} round${verification.checked === 1 ? '' : 's'} from this session verified in your browser.`}
                     </p>

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\Auth\RegisterRequest;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use App\Enums\UserStatus;
 use App\Enums\WalletCurrency;
 use App\Models\WalletTransaction;
 use App\Enums\WalletTransactionType;
@@ -50,10 +51,27 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request)
     {
-        if (!Auth::guard('web')->attempt($request->only('email', 'password'), $request->boolean('remember'))) 
-        {
+        /*
+         * attemptWhen only runs the callback once the password has been verified, so
+         * an account's status is never revealed to someone who doesn't know it
+         */
+        $inactiveStatus = null;
+
+        $loggedIn = Auth::guard('web')->attemptWhen(
+            $request->only('email', 'password'),
+            function (User $user) use (&$inactiveStatus) {
+                $inactiveStatus = $user->status === UserStatus::Active ? null : $user->status;
+
+                return $inactiveStatus === null;
+            },
+            $request->boolean('remember'),
+        );
+
+        if (!$loggedIn) {
             throw ValidationException::withMessages([
-                'email' => 'These credentials do not match our records.',
+                'email' => $inactiveStatus
+                    ? "This account has been {$inactiveStatus->value}."
+                    : 'These credentials do not match our records.',
             ]);
         }
  
